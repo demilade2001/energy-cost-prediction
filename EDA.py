@@ -8,19 +8,29 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
 from sklearn.metrics import mean_squared_error
 from scipy.stats import f_oneway
 
 """## IMPORTING THE MERGED DATASET"""
-merged_df = pd.read_csv(
-    'C:/Users/Demilade/Desktop/Data Analytics Assessment/cleaned merged data.csv')
+data_path = Path.home() / "Desktop" / "Data Analytics Assessment" / "cleaned merged data.csv"
+if not data_path.exists():
+    raise FileNotFoundError(f"Input CSV not found: {data_path}")
+
+merged_df = pd.read_csv(data_path)
 # print(merged_df.info())
 
 """## CORRELATION BETWEEN DEMAND FEATURES AND GENERATION COST"""
 plt.figure(figsize=(17, 10))
-corr_matrix = merged_df.corr().drop(merged_df.iloc[:, 18:36], axis=1).drop(
-    merged_df.iloc[:, 18:36], axis=0)
-sns.heatmap(corr_matrix, cmap="Greens", annot=True, fmt=".2f", square=True, 
+demand_cost_cols = [
+    col for col in merged_df.columns
+    if col.startswith("DF") or col == "Cost_USD_per_MWh"
+]
+correlation_df = merged_df[demand_cost_cols].select_dtypes(include=[np.number])
+if correlation_df.empty:
+    raise ValueError("No numeric demand feature columns found for correlation analysis.")
+corr_matrix = correlation_df.corr()
+sns.heatmap(corr_matrix, cmap="Greens", annot=True, fmt=".2f", square=True,
     linewidths=0.2, annot_kws={"size": 12})
 plt.title("Correlation Heatmap (Demand Features and Generation Cost)", 
           fontsize=16, fontweight='bold', pad=14)
@@ -34,7 +44,7 @@ plt.show()
 """# COST PATTERN ANALYSIS"""
 """## HISTOGRAM OF THE SPREAD OF GENERATION COST"""
 plt.figure(figsize=(10,5))
-sns.histplot(merged_df["Cost_USD_per_MWh"], bins=55, kde=True)
+sns.histplot(data=merged_df, x="Cost_USD_per_MWh", bins=55, kde=True)
 plt.title("Distribution of Generation Cost (USD/MWh)")
 plt.show()
 
@@ -116,7 +126,7 @@ print("\nBaseline RMSE:", rmse)
 baseline_df["Error"] = baseline_df["Actual_Cost"] - baseline_df["Predicted_Cost"]
 
 plt.figure(figsize=(10,5))
-sns.histplot(baseline_df["Error"], bins=35, kde=True)
+sns.histplot(data=baseline_df, x="Error", bins=35, kde=True)
 plt.title("Prediction Error Distribution (Baseline Model)")
 plt.show()
 
