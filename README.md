@@ -98,7 +98,7 @@ python "ML MODEL.py"
 
 ## 📝 Author
 
-Demilade Adeniyi
+Demilade Alatise
 
 ## 📄 License
 
